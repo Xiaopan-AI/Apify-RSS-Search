@@ -27,7 +27,7 @@
             "type": "integer",
             "description": "Number of top matches to return",
             "default": 10,
-            "editor": "textfield"
+            "editor": "number"
         }
     },
     "required": ["query", "feeds"]
