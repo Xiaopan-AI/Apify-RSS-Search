@@ -4,6 +4,7 @@ import bs4
 import asyncio
 import aiohttp
 import argparse
+import datetime
 import feedparser
 import pandas as pd
 from thefuzz import fuzz
@@ -12,7 +13,7 @@ from thefuzz import fuzz
 async def process_one_entry(
     entry: dict,
     query: str,
-    method: str = "token_set_ratio"
+    method: str = "token_set_ratio",
 ) -> int:
     """Process one entry, match with query, return its relevancy score and other data
 
@@ -23,8 +24,13 @@ async def process_one_entry(
     Returns:
         int: score from thefuzz
     """
+    # Get current UTC time and convert it to an integer timestamp, ignoring microseconds
+    utc_timestamp = datetime.datetime.utcnow().replace(microsecond=0).timestamp()
     title = entry["title"]
     link = entry["link"]
+    published = entry["published_parsed"]   # A time.struct_time object
+    # Convert published time to an integer timestamp, UTC timezone, ignoring microseconds
+    published = datetime.datetime(*published[:6]).replace(microsecond=0).timestamp()
     # Use beautifulsoup to only extract text from the possible HTML that is in the description
     soup = bs4.BeautifulSoup(entry["description"], "html.parser")
     description = soup.get_text()
@@ -36,10 +42,12 @@ async def process_one_entry(
             match_func = fuzz.ratio
     title_score = match_func(query, title)
     description_score = match_func(query, description)
+    recency_score = 1.0 * published / utc_timestamp
     return {
         "title": title,
         "link": link,
         "text": description,
+        "recency_score": recency_score,
         "title_score": title_score,
         "description_score": description_score,
     }
@@ -71,6 +79,7 @@ def process_results(
     res: list[list],
     top_n: int,
     sort_by: str = "score",
+    recency_exponent: int = 1,
 ) -> list[dict]:
     """Get top n results from the parsed feeds
 
@@ -84,7 +93,10 @@ def process_results(
     # Results is a list of lists, flatten it
     results = [item for sublist in res for item in sublist]
     df = pd.DataFrame(results)
+    # Overall score is title and description score multiplied
     df["score"] = df["title_score"] * df["description_score"]
+    # Further adjust by recency and its exponent (exponent 0 means recency adjustment is disabled, i.e. multiplier is 1)
+    df["score"] *= (df["recency_score"] ** recency_exponent)
     # Show top N results based on sort_by column
     top_n = min(top_n, len(df))
     return df.sort_values(sort_by, ascending=False).head(top_n).reset_index(drop=True)
@@ -98,13 +110,18 @@ async def main():
         query = actor_input.get("query")
         feeds = actor_input.get("feeds")
         top_n = actor_input.get("top_n", 10)
+        recency_exponent = actor_input.get("recency_exponent", 1)
         # Start parsing
         await Actor.set_status_message("Parsing feeds")
         parse_tasks = [parse_one_feed(url, query, proxy=True, actor=Actor) for url in feeds]
         results = await asyncio.gather(*parse_tasks)
         await Actor.set_status_message("Processing results")
         # Process results
-        results = process_results(results, top_n)
+        results = process_results(
+            results,
+            top_n=top_n,
+            recency_exponent=recency_exponent
+        )
         await Actor.push_data(results.to_dict(orient="records"))
 
 
@@ -113,14 +130,19 @@ async def local_test():
     parser.add_argument("-f", "--feed", nargs="+", type=str, required=True, help="Feed URLs to be parsed")
     parser.add_argument("-q", "--query", type=str, required=True, help="Query string to be matched with the feed")
     parser.add_argument("--method", type=str, default="token_set_ratio", help="Method used for fuzzy matching")
+    parser.add_argument("-r", "--recency_exponent", type=int, default=0, help="0 to disable recency multiplier, higher value means higher penalty on older results")
     parser.add_argument("-n", "--top_n", type=int, default=10, help="Number of top results to be shown")
     args = parser.parse_args()
     # Start parsing
     parse_tasks = [parse_one_feed(url, args.query) for url in args.feed]
     results = await asyncio.gather(*parse_tasks)
     # Process results
-    results = process_results(results, args.top_n)
-    print(results.to_dict(orient="records"))
+    results = process_results(
+        results,
+        top_n=args.top_n,
+        recency_exponent=args.recency_exponent
+    )
+    print(results)
 
 if __name__ == "__main__":
     asyncio.run(local_test())

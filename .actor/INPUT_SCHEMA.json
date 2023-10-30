@@ -8,7 +8,8 @@
             "title": "Search query",
             "type": "string",
             "description": "A search string to match against the RSS feed items",
-            "editor": "textfield"
+            "editor": "textfield",
+            "example": "query string"
         },
         "feeds": {
             "title": "RSS Feeds",
@@ -26,7 +27,16 @@
             "title": "Top N results",
             "type": "integer",
             "description": "Number of top matches to return",
+            "minimum": 1,
             "default": 10,
+            "editor": "number"
+        },
+        "recency_exponent": {
+            "title": "Recency exponent",
+            "type": "integer",
+            "description": "Exponent to apply to recency adjustment of the relevancy score. 0 means no recency adjustment, higher exponent applies heavier penalty for older items.",
+            "minimum": 0,
+            "default": 1,
             "editor": "number"
         }
     },
