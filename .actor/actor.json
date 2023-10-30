@@ -8,5 +8,54 @@
     "meta": {
         "templateId": "python-empty"
     },
-    "dockerfile": "./Dockerfile"
+    "dockerfile": "./Dockerfile",
+    "storages": {
+        "dataset": {
+            "actorSpecification": 1,
+            "views": {
+                "overview": {
+                    "title": "Overview",
+                    "transformation": {
+                        "fields": [
+                            "title",
+                            "link",
+                            "text",
+                            "title_score",
+                            "description_score",
+                            "score"
+                        ]
+                    },
+                    "display": {
+                        "component": "table",
+                        "properties": {
+                            "title": {
+                                "label": "Title",
+                                "format": "text"
+                            },
+                            "link": {
+                                "label": "Link",
+                                "format": "text"
+                            },
+                            "text": {
+                                "label": "Text",
+                                "format": "text"
+                            },
+                            "score": {
+                                "label": "Score",
+                                "format": "number"
+                            },
+                            "title_score": {
+                                "label": "Title Score",
+                                "format": "number"
+                            },
+                            "description_score": {
+                                "label": "Description Score",
+                                "format": "number"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
