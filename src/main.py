@@ -8,6 +8,7 @@ import feedparser
 import pandas as pd
 from thefuzz import fuzz
 
+
 async def process_one_entry(
     entry: dict,
     query: str,
@@ -43,19 +44,20 @@ async def process_one_entry(
         "description_score": description_score,
     }
 
+
 async def parse_one_feed(
     url: str,
     query: str,
     proxy: bool | None = None,
+    actor: Actor | None = None,
     timeout: int = 60,
 ) -> dict:
     """
     Parse and match one RSS feed, return a data dict
     """
     if proxy:
-        async with Actor:
-            proxy_configuration = await Actor.create_proxy_configuration()
-            proxy = await proxy_configuration.new_url()
+        proxy_configuration = await actor.create_proxy_configuration()
+        proxy = await proxy_configuration.new_url()
     async with aiohttp.ClientSession() as session:
         async with session.get(url, proxy=proxy, timeout=timeout) as response:
             text = await response.text()
@@ -63,6 +65,7 @@ async def parse_one_feed(
     match_tasks = [process_one_entry(entry, query) for entry in feed.entries]
     results = await asyncio.gather(*match_tasks)
     return results
+
 
 def process_results(
     res: list[list],
@@ -85,6 +88,7 @@ def process_results(
     # Show top 10 results based on score
     return df.sort_values(sort_by, ascending=False).head(top_n).reset_index(drop=True)
 
+
 async def main():
     async with Actor:
         Actor.log.info("RSS Search Actor Initialized")
@@ -92,10 +96,10 @@ async def main():
         actor_input = await Actor.get_input() or {}
         query = actor_input.get("query")
         feeds = actor_input.get("feeds")
-        top_n = actor_input.get("top_n")
+        top_n = actor_input.get("top_n", 10)
         # Start parsing
         await Actor.set_status_message("Parsing feeds")
-        parse_tasks = [parse_one_feed(url, query, proxy=True) for url in feeds]
+        parse_tasks = [parse_one_feed(url, query, proxy=True, actor=Actor) for url in feeds]
         results = await asyncio.gather(*parse_tasks)
         await Actor.set_status_message("Processing results")
         # Process results
