@@ -13,9 +13,6 @@
         "feeds": {
             "title": "RSS Feeds",
             "type": "array",
-            "items": {
-                "type": "string"
-            },
             "description": "List of RSS Feed URLs to search from",
             "prefill": [
                 "http://example.com/rss.xml"
@@ -23,7 +20,7 @@
             "example": [
                 "http://example.com/rss.xml"
             ],
-            "editor": "requestListSources"
+            "editor": "stringList"
         },
         "top_n": {
             "title": "Top N results",
