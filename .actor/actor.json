@@ -20,9 +20,9 @@
                             "title",
                             "link",
                             "text",
+                            "score",
                             "title_score",
-                            "description_score",
-                            "score"
+                            "description_score"
                         ]
                     },
                     "display": {

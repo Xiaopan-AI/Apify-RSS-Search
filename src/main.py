@@ -85,7 +85,8 @@ def process_results(
     results = [item for sublist in res for item in sublist]
     df = pd.DataFrame(results)
     df["score"] = df["title_score"] * df["description_score"]
-    # Show top 10 results based on score
+    # Show top N results based on sort_by column
+    top_n = min(top_n, len(df))
     return df.sort_values(sort_by, ascending=False).head(top_n).reset_index(drop=True)
 
 
