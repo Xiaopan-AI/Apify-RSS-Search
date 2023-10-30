@@ -14,12 +14,8 @@
             "title": "RSS Feeds",
             "type": "array",
             "description": "List of RSS Feed URLs to search from",
-            "prefill": [
-                { "url": "http://example.com/rss.xml" }
-            ],
-            "example": [
-                { "url": "http://example.com/rss.xml" }
-            ],
+            "prefill": ["http://example.com/rss.xml"],
+            "example": ["http://example.com/rss.xml"],
             "editor": "requestListSources"
         },
         "top_n": {
