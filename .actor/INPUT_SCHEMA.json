@@ -8,7 +8,7 @@
             "title": "Search query",
             "type": "string",
             "description": "A search string to match against the RSS feed items",
-            "editor": "string"
+            "editor": "textfield"
         },
         "feeds": {
             "title": "RSS Feeds",
@@ -27,7 +27,7 @@
             "type": "integer",
             "description": "Number of top matches to return",
             "default": 10,
-            "editor": "integer"
+            "editor": "textfield"
         }
     },
     "required": ["query", "feeds"]
