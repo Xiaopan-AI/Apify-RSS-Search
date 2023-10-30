@@ -1,0 +1,6 @@
+apify ~= 1.2.0
+bs4
+pandas
+aiohttp
+thefuzz
+feedparser

@@ -1,0 +1,12 @@
+{
+    "actorSpecification": 1,
+    "name": "Apify-RSS-Search",
+    "title": "Apify RSS Search",
+    "description": "Apify actor to perform RSS searches.",
+    "version": "0.1",
+    "buildTag": "latest",
+    "meta": {
+        "templateId": "python-empty"
+    },
+    "dockerfile": "./Dockerfile"
+}
