@@ -9,17 +9,18 @@
             "type": "string",
             "description": "A search string to match against the RSS feed items",
             "editor": "textfield",
-            "example": "query string"
+            "example": "query string",
+            "prefill": "AI artificial intelligence"
         },
         "feeds": {
             "title": "RSS Feeds",
             "type": "array",
             "description": "List of RSS Feed URLs to search from",
-            "prefill": [
-                "http://example.com/rss.xml"
-            ],
             "example": [
                 "http://example.com/rss.xml"
+            ],
+            "prefill": [
+                "http://feeds.bbci.co.uk/news/technology/rss.xml"
             ],
             "editor": "stringList"
         },
