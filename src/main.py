@@ -68,6 +68,10 @@ async def parse_one_feed(
         proxy = await proxy_configuration.new_url()
     async with aiohttp.ClientSession() as session:
         async with session.get(url, proxy=proxy, timeout=timeout) as response:
+            # Throw a warning if the status code is not 200
+            if response.status != 200:
+                Actor.log.warning(f"Error {response.status} fetching URL {url}: {response.reason}")
+                return []
             text = await response.text()
     feed = feedparser.parse(text)
     match_tasks = [process_one_entry(entry, query) for entry in feed.entries]
@@ -75,7 +79,7 @@ async def parse_one_feed(
     return results
 
 
-def process_results(
+async def process_results(
     res: list[list],
     top_n: int,
     sort_by: str = "score",
@@ -91,15 +95,17 @@ def process_results(
         list[dict]: List of dicts containing top n results
     """
     # Results is a list of lists, flatten it
-    results = [item for sublist in res for item in sublist]
-    df = pd.DataFrame(results)
-    # Overall score is title and description score multiplied
-    df["score"] = df["title_score"] * df["description_score"]
-    # Further adjust by recency and its exponent (exponent 0 means recency adjustment is disabled, i.e. multiplier is 1)
-    df["score"] *= (df["recency_score"] ** recency_exponent)
-    # Show top N results based on sort_by column
-    top_n = min(top_n, len(df))
-    return df.sort_values(sort_by, ascending=False).head(top_n).reset_index(drop=True)
+    results = [item for sublist in res for item in sublist if item]
+    if len(results) > 0:
+        df = pd.DataFrame(results)
+        # Overall score is title and description score multiplied
+        df["score"] = df["title_score"] * df["description_score"]
+        # Further adjust by recency and its exponent (exponent 0 means recency adjustment is disabled, i.e. multiplier is 1)
+        df["score"] *= (df["recency_score"] ** recency_exponent)
+        # Show top N results based on sort_by column
+        top_n = min(top_n, len(df))
+        return df.sort_values(sort_by, ascending=False).head(top_n).reset_index(drop=True)
+    raise ValueError("No results found")
 
 
 async def main():
@@ -117,7 +123,7 @@ async def main():
         results = await asyncio.gather(*parse_tasks)
         await Actor.set_status_message("Processing results")
         # Process results
-        results = process_results(
+        results = await process_results(
             results,
             top_n=top_n,
             recency_exponent=recency_exponent
@@ -137,7 +143,7 @@ async def local_test():
     parse_tasks = [parse_one_feed(url, args.query) for url in args.feed]
     results = await asyncio.gather(*parse_tasks)
     # Process results
-    results = process_results(
+    results = await process_results(
         results,
         top_n=args.top_n,
         recency_exponent=args.recency_exponent
